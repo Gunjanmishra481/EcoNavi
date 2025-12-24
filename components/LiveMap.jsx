@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-export default function LiveMap({ start, dest, safetyPoints = [] }) {
+export default function LiveMap({ start, dest, safetyPoints = [], routeCoords = [] }) {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
   const routeRef = useRef(null);
@@ -55,17 +55,19 @@ export default function LiveMap({ start, dest, safetyPoints = [] }) {
       });
     }
 
-    routeRef.current = L.polyline(
-      [
-        [start.lat, start.lng],
-        [dest.lat, dest.lng],
-      ],
-      { color: "#16a34a", weight: 5, opacity: 0.85 }
-    ).addTo(map);
+    const coords =
+      routeCoords && routeCoords.length
+        ? routeCoords.map((p) => [p[1], p[0]])
+        : [
+            [start.lat, start.lng],
+            [dest.lat, dest.lng],
+          ];
+
+    routeRef.current = L.polyline(coords, { color: "#16a34a", weight: 5, opacity: 0.9 }).addTo(map);
 
     const group = L.featureGroup([...markersRef.current, routeRef.current]);
     map.fitBounds(group.getBounds(), { padding: [24, 24] });
-  }, [start, dest, safetyPoints]);
+  }, [start, dest, safetyPoints, routeCoords]);
 
   return <div ref={containerRef} className="live-map" aria-label="Live map" />;
 }
