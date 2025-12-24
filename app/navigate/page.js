@@ -5,13 +5,12 @@ import LiveMap from "../../components/LiveMap";
 import { emissionTips } from "../data";
 
 const profiles = [
-  { key: "driving", label: "Car", icon: "🚗", factor: 0.21 },
-  { key: "cycling", label: "Bike", icon: "🚲", factor: 0.0 },
-  { key: "walking", label: "Walk", icon: "🚶", factor: 0.0 },
+  { key: "car", label: "Car", icon: "🚗", factor: 0.21, fallbackSpeedKmh: 70 },
+  { key: "bike", label: "Bike", icon: "🚲", factor: 0.0, fallbackSpeedKmh: 15 },
+  { key: "foot", label: "Walk", icon: "🚶", factor: 0.0, fallbackSpeedKmh: 5 },
 ];
 
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
-const OSRM = "https://router.project-osrm.org/route/v1";
 
 function decodePolyline(str) {
   let index = 0,
@@ -60,8 +59,10 @@ async function geocode(q) {
   }));
 }
 
-async function fetchRoute(profile, start, dest) {
-  const url = `${OSRM}/${profile}/${start.lng},${start.lat};${dest.lng},${dest.lat}?overview=full&geometries=polyline`;
+async function fetchRoute(profileKey, start, dest) {
+  // Use openstreetmap.de OSRM instances with per-mode speeds
+  const base = `https://routing.openstreetmap.de/routed-${profileKey}`;
+  const url = `${base}/route/v1/${profileKey}/${start.lng},${start.lat};${dest.lng},${dest.lat}?overview=full&geometries=polyline`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Routing failed");
   const json = await res.json();
@@ -124,8 +125,17 @@ export default function NavigatePage() {
     try {
       const results = await Promise.all(
         profiles.map(async (p) => {
-          const r = await fetchRoute(p.key, start, dest);
-          return { ...p, ...r, emissions: r.distanceKm * p.factor };
+          try {
+            const r = await fetchRoute(p.key, start, dest);
+            return { ...p, ...r, emissions: r.distanceKm * p.factor };
+          } catch (err) {
+            // Fallback: straight-line distance with heuristic speed
+            const dx = dest.lng - start.lng;
+            const dy = dest.lat - start.lat;
+            const approxKm = Math.sqrt(dx * dx + dy * dy) * 111; // rough degrees->km
+            const durationMin = (approxKm / p.fallbackSpeedKmh) * 60;
+            return { ...p, distanceKm: approxKm, durationMin, geometry: [], emissions: approxKm * p.factor, fallback: true };
+          }
         })
       );
       setRoutes(results);
