@@ -25,10 +25,10 @@ export const emissionTips = [
 ];
 
 export const safetyPoints = [
-  { name: "Central Hospital", type: "Hospital", contact: "911 / +1-415-555-0101" },
-  { name: "Mission Police", type: "Police", contact: "911 / +1-415-555-0114" },
-  { name: "Harbor Fire Station", type: "Fire", contact: "911 / +1-415-555-0130" },
-  { name: "Community Help Desk", type: "Help Desk", contact: "+1-415-555-0145" }
+  { name: "Central Hospital", type: "Hospital", contact: "911 / +1-415-555-0101", lat: 37.773, lng: -122.421 },
+  { name: "Mission Police", type: "Police", contact: "911 / +1-415-555-0114", lat: 37.759, lng: -122.414 },
+  { name: "Harbor Fire Station", type: "Fire", contact: "911 / +1-415-555-0130", lat: 37.806, lng: -122.403 },
+  { name: "Community Help Desk", type: "Help Desk", contact: "+1-415-555-0145", lat: 37.784, lng: -122.416 }
 ];
 
 export const commuteEmissionFactors = {
